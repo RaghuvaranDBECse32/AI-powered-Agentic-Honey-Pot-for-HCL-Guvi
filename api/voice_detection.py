@@ -5,7 +5,8 @@ from typing import Optional
 
 app = FastAPI()
 
-API_KEY = os.getenv("API_KEY")
+API_KEY = os.getenv("API_KEY", "ai_voice_hcl_4F9A2C7D81")
+
 
 SUPPORTED_LANGUAGES = ["Tamil", "English", "Hindi", "Malayalam", "Telugu"]
 
@@ -48,3 +49,4 @@ async def voice_detection(
 @app.get("/")
 def health():
     return {"status": "ok"}
+
