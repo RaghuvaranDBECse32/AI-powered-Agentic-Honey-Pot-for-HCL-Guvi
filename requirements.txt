@@ -1,6 +1,1 @@
-fastapi
-uvicorn
-librosa
-numpy
-pydantic
-python-multipart
+fastapi==0.110.0
