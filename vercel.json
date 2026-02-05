@@ -1,14 +1,13 @@
 {
-  "builds": [
-    {
-      "src": "main.py",
-      "use": "@vercel/python"
+  "functions": {
+    "api/honeypot.py": {
+      "runtime": "python3.10"
     }
-  ],
+  },
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "main.py"
+      "src": "/api/honeypot",
+      "dest": "/api/honeypot.py"
     }
   ]
 }
