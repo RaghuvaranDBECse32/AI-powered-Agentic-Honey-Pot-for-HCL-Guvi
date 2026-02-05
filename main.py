@@ -1,37 +1,43 @@
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 import os
+import re
 
 app = FastAPI()
 
-# Load API key from environment
 API_KEY = os.getenv("API_KEY")
 if not API_KEY:
-    raise RuntimeError("API_KEY not set")
+    raise RuntimeError("API_KEY missing")
 
-# -------- Request Schema --------
 class ScamRequest(BaseModel):
     message: str
     history: list = []
 
-# -------- API KEY CHECK --------
-def verify_api_key(x_api_key: str):
-    if x_api_key != API_KEY:
-        raise HTTPException(status_code=401, detail="Invalid API Key")
+def verify_key(key: str):
+    if key != API_KEY:
+        raise HTTPException(status_code=401, detail="Invalid API key")
 
-# -------- MAIN ENDPOINT --------
 @app.post("/honeypot")
 def honeypot(
     data: ScamRequest,
     x_api_key: str = Header(...)
 ):
-    verify_api_key(x_api_key)
+    verify_key(x_api_key)
 
-    scam_detected = any(word in data.message.lower() for word in [
-        "otp", "kyc", "account", "blocked", "verify", "link"
-    ])
+    msg = data.message.lower()
 
-    response = {
+    scam_keywords = [
+        "kyc", "otp", "verify", "blocked",
+        "bank", "upi", "link", "account"
+    ]
+
+    scam_detected = any(k in msg for k in scam_keywords)
+
+    # Simple extraction logic
+    upi_match = re.search(r"\b[\w.-]+@[\w.-]+\b", msg)
+    url_match = re.search(r"https?://\S+", msg)
+
+    return {
         "scam_detected": scam_detected,
         "agent_activated": scam_detected,
         "engagement": {
@@ -40,14 +46,11 @@ def honeypot(
         },
         "extracted_intelligence": {
             "bank_account": None,
-            "upi_id": None,
-            "phishing_url": None
+            "upi_id": upi_match.group(0) if upi_match else None,
+            "phishing_url": url_match.group(0) if url_match else None
         }
     }
 
-    return response
-
-# -------- HEALTH CHECK --------
 @app.get("/")
-def root():
-    return {"status": "Honeypot API running"}
+def health():
+    return {"status": "ok"}
